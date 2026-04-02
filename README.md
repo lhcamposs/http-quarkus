@@ -1,4 +1,4 @@
-<img width="1062" height="699" alt="image" src="https://github.com/user-attachments/assets/ced8e78e-7e5b-461f-972a-8e5914de4070" /># Sistema Distribuído de Mensagens - Quarkus
+# Sistema Distribuído de Mensagens - Quarkus
 
 Este projeto é uma implementação de uma aplicação REST simples utilizando o framework Quarkus, explorando o protocolo HTTP como mecanismo de comunicação direta entre processos (modelo send/receive).
 
