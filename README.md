@@ -1,66 +1,38 @@
-# http-quarkus
+# Sistema Distribuído de Mensagens - Quarkus
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+Este projeto é uma implementação de uma aplicação REST simples utilizando o framework Quarkus, explorando o protocolo HTTP como mecanismo de comunicação direta entre processos (modelo send/receive).
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## 4.1. Arquitetura da Solução
 
-## Running the application in dev mode
+### Fluxo da Requisição POST `/mensagens`
+Quando um cliente deseja enviar uma nova mensagem, a comunicação direta entre processos ocorre da seguinte forma:
 
-You can run your application in dev mode that enables live coding using:
+1. **Sender (Cliente/Postman)**: O processo cliente constrói uma requisição HTTP. Ele encapsula os dados da mensagem (`remetente` e `conteudo`) no corpo (Body) da requisição no formato JSON e estabelece uma conexão TCP com o servidor na porta especificada (ex: 8080).
+2. **Protocolo HTTP**: Atua como o meio de transporte, definindo as regras de formatação. O cabeçalho carrega metadados (como `Content-Type: application/json`) e o método `POST` indica a intenção de criar um recurso.
+3. **Receiver (Servidor/Quarkus)**: A aplicação Quarkus (rodando via servidor embutido, como o Vert.x/RESTEasy) escuta a porta, aceita a conexão, desserializa o JSON recebido para o objeto Java `Mensagem`, atribui o ID e o Timestamp, salva na memória e devolve uma resposta HTTP de confirmação ao Sender.
 
-```shell script
-./mvnw quarkus:dev
-```
+### Mapeamento Teórico: Métodos HTTP x Send/Receive
+Os métodos HTTP utilizados mapeiam diretamente para as primitivas de comunicação de sistemas distribuídos:
+* **GET**: Uma operação onde o *Sender* solicita o estado atual de um recurso e aguarda o *Receive* da resposta com os dados (ex: todas as mensagens ou uma específica).
+* **POST**: Uma operação onde o *Sender* envia uma nova informação de estado para o processo remoto e faz um *Receive* da confirmação (ACK) de que o recurso foi criado com sucesso.
+* **DELETE**: O *Sender* emite um comando de destruição de estado para o processo remoto e aguarda o *Receive* confirmando o sucesso da operação.
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+---
 
-## Packaging and running the application
+## 4.2. Evidências de Funcionamento
 
-The application can be packaged using:
+### Tabela de Testes
 
-```shell script
-./mvnw package
-```
+| Método | Rota | Descrição | Evidência (Print) |
+|---|---|---|---|
+| **POST** | `/mensagens` | Cria uma nova mensagem | [INSERIR PRINT DO POSTMAN AQUI] |
+| **GET** | `/mensagens` | Retorna todas as mensagens | [INSERIR PRINT DO POSTMAN AQUI] |
+| **GET** | `/mensagens/{id}` | Busca mensagem válida | [INSERIR PRINT DO POSTMAN AQUI] |
+| **GET** | `/mensagens/{id}` | Busca mensagem inválida | [INSERIR PRINT DO POSTMAN AQUI] |
+| **DELETE** | `/mensagens/{id}`| Remove mensagem existente | [INSERIR PRINT DO POSTMAN AQUI] |
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+### Justificativa dos Status Codes (HTTP)
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar
-```
-
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using:
-
-```shell script
-./mvnw package -Dnative
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./target/http-quarkus-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
-
-## Related Guides
-
-- RESTEasy Classic ([guide](https://quarkus.io/guides/resteasy)): REST endpoint framework implementing Jakarta REST and more
-
-## Provided Code
-
-### RESTEasy JAX-RS
-
-Easily start your RESTful Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started#the-jax-rs-resources)
+* **200 OK**: Utilizado nos endpoints `GET` para indicar que a requisição de busca foi processada com sucesso e o corpo da resposta contém os dados solicitados. Também utilizado no `DELETE` bem-sucedido.
+* **201 Created**: Utilizado no endpoint `POST` para confirmar que a requisição foi bem-sucedida e que um novo recurso (a mensagem) foi criado no servidor de forma síncrona.
+* **404 Not Found**: Utilizado nos endpoints `GET /{id}` e `DELETE /{id}` quando o identificador fornecido pelo cliente não existe na lista em memória, informando corretamente que o recurso alvo da operação é inválido.
