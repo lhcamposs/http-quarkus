@@ -7,6 +7,7 @@ import jakarta.ws.rs.core.Response;
 import org.lhcampos.model.Message;
 import org.lhcampos.services.MessageService;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Path("/messages")
@@ -24,13 +25,15 @@ public class MessageController {
 
     @GET
     @Path("/{id}")
-    public Response getMessageById(Long id) {
+    public Response getMessageById(@PathParam("id") Long id) {
         Optional<Message> message = messageService.getMessageById(id);
 
         if (message.isPresent()) {
             return Response.ok(message.get()).build();
         }
-        return Response.status(Response.Status.NOT_FOUND).build();
+        return Response.status(Response.Status.NOT_FOUND)
+                .entity(Map.of("error", "Message with ID " + id + " not found."))
+                .build();
     }
 
     @POST
@@ -45,8 +48,12 @@ public class MessageController {
         boolean removed = messageService.deleteMessage(id);
 
         if (removed) {
-            return Response.ok().build();
+            return Response.ok()
+                    .entity(Map.of("message", "Message with ID " + id + " deleted."))
+                    .build();
         }
-        return Response.status(Response.Status.NOT_FOUND).build();
+        return Response.status(Response.Status.NOT_FOUND)
+                .entity(Map.of("error", "Message with ID " + id + " not found."))
+                .build();
     }
 }
